@@ -40,7 +40,6 @@ let comedian = new Assistant("I want you to act as a stand-up comedian. Tell me 
 
 let new_joke = new cloud.Topic();
 let store = new cloud.Bucket() as "Store";
-let q = new cloud.Queue();
 
 new Translator("spanish", new_joke, store) as "Spanish Translator";
 new Translator("hebrew", new_joke, store) as "Hebrew Translator";
