@@ -38,15 +38,11 @@ resource Translator {
 
 let comedian = new Assistant("I want you to act as a stand-up comedian. Tell me a joke about:") as "Comedian";
 
-let new_joke = new cloud.Topic();
-let store = new cloud.Bucket() as "Store";
+let new_joke = new cloud.Topic() as "New Joke";
+let store = new cloud.Bucket() as "Joke Store";
 
 new Translator("spanish", new_joke, store) as "Spanish Translator";
 new Translator("hebrew", new_joke, store) as "Hebrew Translator";
-
-new_joke.on_message(inflight (joke: str) => {
-  q.push(joke);
-});
 
 new cloud.Function(inflight () => {
   let topic = "programming languages";
