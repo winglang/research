@@ -1,13 +1,13 @@
 const ngrok = require("ngrok");
 
-// export const connect = async (port) => {
-//   console.log("setup ngrok");
-//   const portNumber = port.split(":")[2];
-//   await ngrok.connect(portNumber);
-// };
-
-exports.connect = async function (port) {
+let connection;
+exports._connect = async function (url) {
   console.log("setup ngrok");
-  const portNumber = port.split(":")[2];
-  await ngrok.connect(portNumber);
+  const portNumber = url.split(":")[2];
+  if (connection) {
+    console.log("ngrok already connected");
+    return connection;
+  }
+  connection = await ngrok.connect(portNumber);
+  return connection;
 };

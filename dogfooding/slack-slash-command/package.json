@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "ngrok": "^4.3.3"
+    "ngrok": "^4.3.3",
+    "node-fetch": "^2.6.9"
   }
 }
