@@ -15,3 +15,15 @@ exports._encodeBody = (obj) => {
   const data = new url.URLSearchParams(obj).toString();
   return data;
 };
+
+exports._sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+exports._jsonStringify = (obj) => {
+  return JSON.stringify(obj);
+};
+
+exports._jsonParse = (obj) => {
+  return JSON.parse(obj);
+};

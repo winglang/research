@@ -1,5 +1,11 @@
 bring cloud;
-
+/**
+  * Structs
+  */
+struct FetchResponse {
+  body: str;
+  status: num;
+}
 /**
   * RESOURCES
   */
@@ -8,6 +14,10 @@ resource NodeHelpers {
   extern "./nodeHelpers.js" static inflight _getEnvOrThrow(env_var_name:str): str;
   extern "./nodeHelpers.js" static inflight _parse_querystring(body:str): str;
   extern "./nodeHelpers.js" static inflight _encodeBody(body:Json): str;
+  extern "./nodeHelpers.js" static inflight _sleep(ms:num);
+  extern "./nodeHelpers.js" static inflight _jsonStringify(json:Json): str;
+  extern "./nodeHelpers.js" static inflight _jsonParse(json:str): Json;
+  extern "./fetch.js" static inflight _fetch(url:str, method:str, body:Json): FetchResponse;
 
   inflight getEnvOrThrow(env_var_name: str): str {
     return NodeHelpers._getEnvOrThrow(env_var_name);
@@ -15,6 +25,22 @@ resource NodeHelpers {
   
   inflight parse_querystring(body: str): str {
     return NodeHelpers._parse_querystring(body);
+  }
+
+  inflight fetch(url:str, method:str, body:Json): FetchResponse {
+    return NodeHelpers._fetch(url, method, body);
+  }
+
+  inflight sleep(ms:num) {
+    NodeHelpers._sleep(ms);
+  }
+
+  inflight jsonStringify(json:Json): str {
+    return NodeHelpers._jsonStringify(json);
+  }
+
+  inflight jsonParse(json:str): Json {
+    return NodeHelpers._jsonParse(json);
   }
 }
 resource Ngrok{
@@ -56,6 +82,7 @@ resource PortForward {
 let node_helper = new NodeHelpers();
 let api = new cloud.Api();
 let queue = new cloud.Queue();
+let bucket = new cloud.Bucket();
 // let ngrok = new Ngrok();
 //let portForwarder = new PortForward(api, node_helper, ngrok);
 
@@ -97,8 +124,11 @@ api.post("/command", inflight (request: cloud.ApiRequest): cloud.ApiResponse => 
   let EMPTY_JSON = Json { empty: "https://github.com/winglang/wing/issues/1947" };
   log("HANDLE COMMAND REQUEST");
   let body = request.body ?? EMPTY_JSON;
+  let response_url = str.from_json(body.get("response_url"));
+  log(response_url);
   queue.push(str.from_json(body.get("response_url")));
-  
+  // bucket.put(str.from_json(body.get("trigger_id")),node_helper.jsonStringify(body));
+
   let resp = cloud.ApiResponse {
     headers: {
       "Content-Type": "application/json",
@@ -109,14 +139,18 @@ api.post("/command", inflight (request: cloud.ApiRequest): cloud.ApiResponse => 
   return resp;
 });
 
+queue.add_consumer( inflight (msg:str) => {
+  log("HANDLE QUEUE ITEM");
+  log(msg);
+  node_helper.fetch(msg, "POST", Json {
+    text: "Hello World",
+  });
+  
+});
+
 /**
   * TESTS
   */
-
-struct FetchResponse {
-  body: str;
-  status: num;
-}
 
 resource TestApi {
   extern "./testFetch.js" static inflight callWithUrlEncodedBody(url:str, jsonBody: Json): FetchResponse;
@@ -124,11 +158,13 @@ resource TestApi {
   node_helper: NodeHelpers;
   restapi: cloud.Api;
   queue: cloud.Queue;
+  bucket: cloud.Bucket;
 
-  init(node_helper: NodeHelpers, restapi: cloud.Api, queue: cloud.Queue) { 
+  init(node_helper: NodeHelpers, restapi: cloud.Api, queue: cloud.Queue, bucket: cloud.Bucket) { 
     this.node_helper = node_helper;
     this.restapi = restapi;
     this.queue = queue;
+    this.bucket = bucket;
   }
  
     inflight call_with_encoded_body() :str {
@@ -168,10 +204,19 @@ resource TestApi {
       // ASSERT
       assert(response.status == 200);
       assert(this.queue.approx_size() == 1);
+      this.node_helper.sleep(1000);
+      let responseUrl = this.bucket.get("5101396650615.1702778361841.2c19a4f914940420391cc92cb60b747e");
+      log("responseString: ${responseUrl}");
+      let responseUrlJson = this.node_helper.jsonParse(responseUrl);
+      let expected_response_url = str.from_json( slack_body_object.get("response_url"));
+      let actual_response_url = str.from_json( responseUrlJson.get("response_url"));
+      log("responseUrl: ${actual_response_url}");
+      log("expected_response_url: ${expected_response_url}");
+      assert(actual_response_url == expected_response_url);
     }
 }
 
-let testApi = new TestApi(node_helper, api, queue);
+let testApi = new TestApi(node_helper, api, queue, bucket);
 
 new cloud.Function(inflight () => {
   testApi.call_with_encoded_body();
@@ -182,9 +227,12 @@ new cloud.Function(inflight () => {
 }) as "test: handle urlencoded body";
 
 new cloud.Function(inflight () => {
+  log(node_helper.getEnvOrThrow("API_URL"));
+  // node_helper.sleep(100000);
+
   testApi.call_with_slack_body();
 }, cloud.FunctionProps {
   env: {
     "API_URL": api.url,
-  }
+  },
 }) as "test: handle slack body";
