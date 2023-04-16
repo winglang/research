@@ -8,7 +8,7 @@
 //
 // 1. Go to https://github.com/<test-repo>/releases, click create a new release.
 //    Fill in all of the information but do not click "Publish release" yet.
-// 2. Run `wing test src/main.w`.
+// 2. Run `wing test dogfooding/webhook/main.w`.
 // 3. Go back to your browser and publish the release. The test has a 20 second
 //    timeout, so you have about 20 seconds to do this, but you can change the
 //    timeout if you want.
