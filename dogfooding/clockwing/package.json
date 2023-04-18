@@ -1,0 +1,14 @@
+{
+  "name": "clockwing",
+  "type": "module",
+  "scripts": {
+    "dev": "esbuild src/*.ts --bundle --format=cjs --platform=node --target=node18 --outdir=dist --watch"
+  },
+  "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.315.0",
+    "nanoid": "^4.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.17"
+  }
+}
