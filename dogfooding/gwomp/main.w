@@ -8,13 +8,8 @@
 //
 bring cloud;
 
-resource Util {
-  init(){
-    this.display.hidden = true;
-  }
-  extern "./util.js" inflight to_json_array(obj: Json): Array<Json>;
-  extern "./util.js" inflight json_keys(obj: Json): Array<str>;
-}
+// ------------------------------------------------------------------------------------------------
+// Util
 
 struct HttpRequestOptions {
   method: str?;
@@ -22,15 +17,22 @@ struct HttpRequestOptions {
   body: str;
 }
 
-resource Http {
-  init() { }
+resource Util {
+  init() {
+    this.display.hidden = true;
+  }
 
   inflight fetch(url: str, options: HttpRequestOptions?): Json {
     return this._fetch(url, options);
   }
 
-  extern "./http.js" inflight _fetch(url: str, options: Json): Json;
+  extern "./util.js" inflight to_json_array(obj: Json): Array<Json>;
+  extern "./util.js" inflight json_keys(obj: Json): Array<str>;
+  extern "./util.js" inflight _fetch(url: str, options: Json): Json;
 }
+
+// ------------------------------------------------------------------------------------------------
+// Secret
 
 resource Secret {
   name: str;
@@ -49,6 +51,9 @@ resource Secret {
   
   extern "./secret.js" inflight _get_value(key: str): str?;
 }
+
+// ------------------------------------------------------------------------------------------------
+// GitHub
 
 struct GitHubIssue {
   url: str;
@@ -105,13 +110,11 @@ resource GitHub {
   extern "./github.js" inflight _list_pulls(auth: str): Json;
 }
 
+// ------------------------------------------------------------------------------------------------
+// Slack
+
 struct SlackProps {
   token: Secret;
-}
-
-struct SlackBlockText {
-  type: str;
-  text: str;
 }
 
 struct PostMessageArgs {
@@ -122,18 +125,18 @@ struct PostMessageArgs {
 
 resource Slack {
   token: Secret;
-  http: Http;
+  util: Util;
 
   init(props: SlackProps) {
     this.token = props.token;
-    this.http = new Http();
+    this.util = new Util();
   }
 
   inflight post_message(args: PostMessageArgs) {
     let token = this.token.value();
 
     let blocks: Json = args.blocks ?? Array<Json> [];
-    let res = this.http.fetch("https://slack.com/api/chat.postMessage", 
+    let res = this.util.fetch("https://slack.com/api/chat.postMessage", 
       method: "POST",
       headers: {
         "Authorization": "Bearer ${token}",
@@ -145,9 +148,13 @@ resource Slack {
         blocks: blocks,
       })
     );
+
     log(Json.stringify(res));
   }  
 }
+
+// ------------------------------------------------------------------------------------------------
+// Gwomp
 
 struct GwompProps {
   github_token: Secret;
@@ -192,6 +199,8 @@ resource Gwomp {
     this.slack.post_message(channel: this.channel, blocks: blocks);
   }
 }
+
+// -------------------------------------------------------------------------------
 
 let gh_token = new Secret("github") as "gh secret";
 let slack_token = new Secret("slack") as "slack secret";
