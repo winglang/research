@@ -1,3 +1,3 @@
 import { nanoid } from "nanoid";
 
-export const create = () => nanoid();
+export const create = () => `!!!${nanoid()}`;
