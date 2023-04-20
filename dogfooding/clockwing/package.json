@@ -9,6 +9,7 @@
     "nanoid": "^4.0.2"
   },
   "devDependencies": {
+    "@types/node": "^18.15.12",
     "esbuild": "^0.17.17"
   }
 }
