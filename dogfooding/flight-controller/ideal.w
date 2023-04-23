@@ -93,18 +93,18 @@ resource FlightController {
       }
     };
 
+    // event-based, so that runway can be used immediately if there are more flights scheduled
+    let send_next_flight_fn = availability_signal.on_message(inflight (message: str) => {
+      send_next_flight();
+    }, cloud.TopicOnMessageProps { timeout: props.max_runway_occupation_per_flight }); // FIXME: TopicOnMessageProps should extends FunctionProps: https://github.com/winglang/wing/issues/2218
+
     let saturate_runway = inflight () => {
       let var available_capacity = runway.get_available_capacity();
       while available_capacity > 0 {
-        defer send_next_flight();
+        defer send_next_flight_fn.invoke();
         available_capacity = available_capacity - 1;
       }
     };
-
-    // event-based, so that runway can be used immediately if there are more flights scheduled
-    availability_signal.on_message(inflight (message: str) => {
-      send_next_flight();
-    }, cloud.TopicOnMessageProps { timeout: props.max_runway_occupation_per_flight }); // FIXME: TopicOnMessageProps should extends FunctionProps: https://github.com/winglang/wing/issues/2218
 
     // time-based, so that new flights can use runway if previously scheduled flights are all done when signaling available
     availability_checker.on_tick(saturate_runway, cloud.ScheduleOnTickProps { timeout: props.max_runway_occupation_per_flight });
