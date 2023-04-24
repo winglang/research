@@ -9,7 +9,7 @@ of thaaaaangs.
 
 ## Demo Video
 
-[![ALT](https://youtube-md.vercel.app/LaZNk7mukLE)](https://www.youtube.com/watch?v=LaZNk7mukLE)
+[YouTube](https://www.youtube.com/watch?v=LaZNk7mukLE)
 
 
 ## Issues
