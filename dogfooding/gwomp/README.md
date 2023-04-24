@@ -9,7 +9,8 @@ of thaaaaangs.
 
 ## Demo Video
 
-<video src='https://youtu.be/LaZNk7mukLE' width="180"></video>
+
+<video src="https://youtu.be/LaZNk7mukLE" width="180"/>
 
 ## Issues
 
