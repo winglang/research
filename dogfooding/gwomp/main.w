@@ -168,8 +168,6 @@ resource Gwomp {
 
 // -------------------------------------------------------------------------------
 
-let util = new Util();
-
 let gh_token = new cloud.Secret(name: "github-token-3") as "GitHub Token";
 let slack_token = new cloud.Secret(name: "slack-token-3") as "Slack Token";
 
@@ -200,9 +198,8 @@ new cloud.Function(inflight () => {
   gwomp.daily_report();
 }) as "test:daily report";
 
-// Doesn't work in simulator, so I have to comment-out when running locally :-(
-// 9am Israel Time
-let schedule = new cloud.Schedule(cron: "0 6 * * ?");
+// doesn't work in simulator, so comment-out when running locally :-(
+let schedule = new cloud.Schedule(cron: "0 6 * * ?"); // 9am Israel Time
 schedule.on_tick(inflight () => {
   gwomp.daily_report();
 });
