@@ -101,6 +101,16 @@ resource WhereToEatApi {
         this.api = new cloud.Api();        
         this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/research/dogfooding/where-to-eat/website");
         this.website.add_json("config.json", { apiUrl: this.api.url });
+        this.api.options("/addRestaurant", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
+            return cloud.ApiResponse {
+                headers: {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+                },
+                status: 200
+            };
+        });
         this.api.options("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
             return cloud.ApiResponse {
                 headers: {
@@ -133,6 +143,25 @@ resource WhereToEatApi {
             let restaurants = where_to_eat.list_restaurants(keyword);
             return cloud.ApiResponse {
                 body: {restaurants: restaurants},
+                status: 200
+            }; 
+        });
+        this.api.post("/addRestaurant", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
+            let body: Json = req.body ?? {name: "", type: "", rating: "0"};
+            if (body.get("name") == "" || body.get("type")  == "" || body.get("rating")  == "0") {
+                return cloud.ApiResponse {
+                    body: {error: "incomplete details"},       
+                    status: 400
+                  };
+            }
+            let restaurant = Restaurant {
+                name: str.from_json(body.get("name")),
+                type: str.from_json(body.get("type")),
+                rating: num.from_json(body.get("rating"))
+            };
+            where_to_eat.bookmark_restaurant(restaurant);
+            return cloud.ApiResponse {
+                body: {restaurant: restaurant},
                 status: 200
             }; 
         });
