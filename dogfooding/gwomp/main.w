@@ -133,19 +133,6 @@ resource Slack {
 }
 
 // ------------------------------------------------------------------------------------------------
-
-resource Service {
-  server: cloud.Function;
-  init(entrypoint: cloud.IFunctionHandler) {
-    new cloud.Function(entrypoint) as "Start";
-  }
-
-  inflight start() {
-    this.server.invoke("");
-  }
-}
-
-// ------------------------------------------------------------------------------------------------
 // Gwomp
 
 struct GwompProps {
