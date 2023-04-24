@@ -1,7 +1,8 @@
 const fetch = require("node-fetch");
 const google_places_url =
   "https://maps.googleapis.com/maps/api/place/nearbysearch/json?radius=1000&type=restaurant&location={location}&keyword={keyword}&key={key}";
-exports.list_restaurants = async function (location, keyword, key) {
+
+  exports.list_restaurants = async function (location, keyword, key) {
   const res = await fetch(
     google_places_url
       .replace("{location}", location)
