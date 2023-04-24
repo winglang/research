@@ -27,7 +27,6 @@ resource Util {
   }
 
   extern "./util.js" inflight to_json_array(obj: Json): Array<Json>;
-  extern "./util.js" inflight json_keys(obj: Json): Array<str>;
   extern "./util.js" inflight _fetch(url: str, options: Json): Json;
 }
 
@@ -59,7 +58,7 @@ resource GitHub {
     let issues = this.util.to_json_array(this._list_assigned(this.token.value()).get("data"));
     let pulls = this.util.to_json_array(this._list_pulls(this.token.value()).get("data").get("items"));
 
-    for p in pulls {
+    for p in pulls.concat((issues)) {
       let title = str.from_json(p.get("title"));
       let url = str.from_json(p.get("html_url"));
       let number = num.from_json(p.get("number"));
@@ -70,19 +69,7 @@ resource GitHub {
       });
     }
 
-    for item in issues {
-      let number = num.from_json(item.get("number"));
-      let url = str.from_json(item.get("html_url"));
-      let title = str.from_json(item.get("title"));
-
-      result.push(GitHubIssue {
-        number: number,
-        url: url,
-        title: title
-      });
-    }
-
-    return result;
+    return result.copy();
   }
 
   extern "./github.js" inflight _list_assigned(auth: str): Json;
@@ -136,8 +123,8 @@ resource Slack {
 // Gwomp
 
 struct GwompProps {
-  github_token: cloud.Secret;
-  slack_token: cloud.Secret;
+  github: GitHub;
+  slack: Slack;
   channel: str;
 }
 
@@ -147,13 +134,13 @@ resource Gwomp {
   channel: str;
 
   init(props: GwompProps) {
-    this.gh = new GitHub(token: props.github_token);
-    this.slack = new Slack(token: props.slack_token);
+    this.gh = props.github;
+    this.slack = props.slack;
     this.channel = props.channel;
   }
 
   inflight daily_report() {
-    let result = this.gh.list_assigned_issues();  
+    let result = this.gh.list_assigned_issues();
 
     let blocks = MutArray<Json>[];
     blocks.push(Json { 
@@ -183,8 +170,8 @@ resource Gwomp {
 
 let util = new Util();
 
-let gh_token = new cloud.Secret(name: "github") as "GitHub Token";
-let slack_token = new cloud.Secret(name: "slack") as "Slack Token";
+let gh_token = new cloud.Secret(name: "github-token-3") as "GitHub Token";
+let slack_token = new cloud.Secret(name: "slack-token-3") as "Slack Token";
 
 let gh = new GitHub(token: gh_token);
 let slack = new Slack(token: slack_token);
@@ -203,8 +190,8 @@ new cloud.Function(inflight () => {
 }) as "test:slack";
 
 let gwomp = new Gwomp(
-  github_token: gh_token, 
-  slack_token: slack_token, 
+  github: gh, 
+  slack: slack, 
   channel: "#eladb-test"
 );
 
@@ -212,3 +199,10 @@ new cloud.Function(inflight () => {
   log("producing daily report");
   gwomp.daily_report();
 }) as "test:daily report";
+
+// Doesn't work in simulator, so I have to comment-out when running locally :-(
+// 9am Israel Time
+let schedule = new cloud.Schedule(cron: "0 6 * * ?");
+schedule.on_tick(inflight () => {
+  gwomp.daily_report();
+});

@@ -1,7 +1,15 @@
 # gwomp - github, what's on my plate?
 
-> Sends a cute little slack message with a list of assigned open issues and PRs so you can be on top
-> of thaaaaangs.
+Sends a cute little slack message with a list of assigned open issues and PRs so you can be on top
+of thaaaaangs.
+
+## Team
+
+@eladb
+
+## Demo Video
+
+<video src='https://youtu.be/LaZNk7mukLE'/>
 
 ## Issues
 
@@ -29,6 +37,8 @@
 - [#2235](https://github.com/winglang/wing/issues/2235) - :new: copy blue screen to clipboard for easy sharing
 - [#2236](https://github.com/winglang/wing/issues/2236) - :new: capture inflight closures from inflight
 - [#2237](https://github.com/winglang/wing/issues/2237) - :new: cloud.Service with `on_startup` and `on_shutdown`.
+- [#2250](https://github.com/winglang/wing/issues/2250) - :new: test functions should not be deployed to production
 - [#2023](https://github.com/winglang/wing/issues/2023) - unable to model union types in structs
 - [#2059](https://github.com/winglang/wing/issues/2059) - ESM imports from inflight (no workaround)
+- [#2252](https://github.com/winglang/wing/issues/2252) - :new: `name` in `cloud.Secret` should indicate existing secret
 - [#476](https://github.com/winglang/wing/issues/476) - bring local
