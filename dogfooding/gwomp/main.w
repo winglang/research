@@ -32,27 +32,6 @@ resource Util {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Secret
-
-resource Secret {
-  name: str;
-  init(name: str) {
-    this.name = name;
-  }
-
-  inflight value(): str {
-    let v = this._get_value(this.name);
-    if v? {
-      return v ?? "";
-    } else {
-      throw("no secret named ${this.name}");
-    }
-  }
-  
-  extern "./secret.js" inflight _get_value(key: str): str?;
-}
-
-// ------------------------------------------------------------------------------------------------
 // GitHub
 
 struct GitHubIssue {
@@ -62,11 +41,11 @@ struct GitHubIssue {
 }
 
 struct GitHubProps {
-  token: Secret;
+  token: cloud.Secret;
 }
 
 resource GitHub {
-  token: Secret;
+  token: cloud.Secret;
   util: Util;
 
   init(props: GitHubProps) {
@@ -114,7 +93,7 @@ resource GitHub {
 // Slack
 
 struct SlackProps {
-  token: Secret;
+  token: cloud.Secret;
 }
 
 struct PostMessageArgs {
@@ -124,7 +103,7 @@ struct PostMessageArgs {
 }
 
 resource Slack {
-  token: Secret;
+  token: cloud.Secret;
   util: Util;
 
   init(props: SlackProps) {
@@ -154,11 +133,24 @@ resource Slack {
 }
 
 // ------------------------------------------------------------------------------------------------
+
+resource Service {
+  server: cloud.Function;
+  init(entrypoint: cloud.IFunctionHandler) {
+    new cloud.Function(entrypoint) as "Start";
+  }
+
+  inflight start() {
+    this.server.invoke("");
+  }
+}
+
+// ------------------------------------------------------------------------------------------------
 // Gwomp
 
 struct GwompProps {
-  github_token: Secret;
-  slack_token: Secret;
+  github_token: cloud.Secret;
+  slack_token: cloud.Secret;
   channel: str;
 }
 
@@ -202,8 +194,10 @@ resource Gwomp {
 
 // -------------------------------------------------------------------------------
 
-let gh_token = new Secret("github") as "gh secret";
-let slack_token = new Secret("slack") as "slack secret";
+let util = new Util();
+
+let gh_token = new cloud.Secret(name: "github") as "GitHub Token";
+let slack_token = new cloud.Secret(name: "slack") as "Slack Token";
 
 let gh = new GitHub(token: gh_token);
 let slack = new Slack(token: slack_token);
