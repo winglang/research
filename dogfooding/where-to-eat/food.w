@@ -92,15 +92,15 @@ resource WhereToEat {
 }
 
 resource WhereToEatApi {
-    // website: cloud.Website;
+    website: cloud.Website;
     api: cloud.Api;
     where_to_eat: WhereToEat;
 
     init(where_to_eat: WhereToEat) {
         this.where_to_eat = where_to_eat;
         this.api = new cloud.Api();        
-        // this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/where-to-eat/build");
-        // this.website.add_json("config.json", { apiUrl: this.api.url });
+        this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/where-to-eat/build");
+        this.website.add_json("config.json", { apiUrl: this.api.url });
         this.api.options("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
             return cloud.ApiResponse {
                 headers: {
