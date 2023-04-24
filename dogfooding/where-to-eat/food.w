@@ -99,7 +99,7 @@ resource WhereToEatApi {
     init(where_to_eat: WhereToEat) {
         this.where_to_eat = where_to_eat;
         this.api = new cloud.Api();        
-        this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/where-to-eat/build");
+        this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/research/dogfooding/where-to-eat/website");
         this.website.add_json("config.json", { apiUrl: this.api.url });
         this.api.options("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
             return cloud.ApiResponse {
