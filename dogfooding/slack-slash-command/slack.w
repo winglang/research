@@ -175,8 +175,19 @@ queue.add_consumer( inflight (msg:str) => {
   log("HANDLE QUEUE ITEM");
   let slack_info = Json.try_parse(msg) ?? EMPTY_JSON;
   log(str.from_json( slack_info.get("user_id")));
+  
+  let FALLBACK_USER_STATE = Json { last_commit: "main" };
+  let var user_state = FALLBACK_USER_STATE;
+  try {
+    user_state = bucket.get_json("${str.from_json( slack_info.get("user_id"))}.json");
+  } catch e {
+    log(e);
+  }
+  log("user_state: ${user_state.get("last_commit")}");
 
-  let base_version = "v0.13.21";
+  let base_version = str.from_json(user_state.get("last_commit"));
+  log("base_version: ${base_version}");
+
   let releaseNote = node_helper.fetch("https://api.github.com/repos/winglang/wing/compare/${base_version}...main", "GET");
   let callback_url = str.from_json(slack_info.get("response_url"));
   let github_compare_response = node_helper.castToGithubCompare(releaseNote.body);
@@ -184,10 +195,18 @@ queue.add_consumer( inflight (msg:str) => {
   for commit in github_compare_response.commits {
     log(commit.commit.message);
     messages = "${messages} ${commit.commit.message}";
-  }
 
+  }
+  log(github_compare_response.base_commit.sha);
+  bucket.put_json("${str.from_json(slack_info.get("user_id"))}.json", Json { last_commit: github_compare_response.base_commit.sha });
+  let var final_message = messages;
+  if (messages == "") {
+    final_message = "No new commits since ${base_version}";
+  }
   let foo = Json {
-    text: messages,
+    text: final_message,
+
+
   };
 
 
