@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+      "@cdktf/provider-github": "^8.0.0",
+      "node-fetch": "^2",
+      "slackify-markdown": "^4.3.1"
+  }
+}
