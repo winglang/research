@@ -239,16 +239,16 @@ resource CommandHandler {
   */
 
 /* Basic */
-let api = new cloud.Api();
-let queue = new cloud.Queue();
-let bucket = new cloud.Bucket();
+let api = new cloud.Api() as "slack-api";
+let queue = new cloud.Queue() as "command-queue";
+let bucket = new cloud.Bucket() as "user-state-bucket";
 
 /* Custom */
-let node_helper = new NodeHelpers();
-let github_api = new GithubApi(node_helper);
-let user_state_repository = new UserStateRepository(bucket);
-let slack_api = new SlackApi(node_helper);
-let command_handler = new CommandHandler(slack_api, user_state_repository, github_api, node_helper);
+let node_helper = new NodeHelpers() as "node-helpers";
+let github_api = new GithubApi(node_helper) as "github-api-client";
+let user_state_repository = new UserStateRepository(bucket) as "user-state-repository";
+let slack_api = new SlackApi(node_helper) as "slack-api-client";
+let command_handler = new CommandHandler(slack_api, user_state_repository, github_api, node_helper) as "command-handler";
 
 /**
   * APPLICATION
