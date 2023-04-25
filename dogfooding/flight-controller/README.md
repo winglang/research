@@ -6,6 +6,9 @@ FlightController uses a user-defined inflight function to handle each received t
 ## Team
 @flyingImer
 
+## Demo
+![demo](./flight-controller-sim-demo.gif)
+
 ## Issues
 - [#2161](https://github.com/winglang/wing/issues/2161) - 🆕 Compiler crashes on function type in struct
 - [#390](https://github.com/winglang/wing/issues/390) - Function Declaration: call inflight closure from inflight code
