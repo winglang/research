@@ -31,3 +31,15 @@ exports._jsonParse = (obj) => {
 exports._castGithubCompare = (obj) => {
   return obj;
 };
+
+exports._castGithubCommit = (obj) => {
+  return obj;
+};
+
+exports._starts_with = (str, matches) => {
+  return str.startsWith(matches);
+};
+
+exports._split_str = (str, separator) => {
+  return str.split(separator);
+};
