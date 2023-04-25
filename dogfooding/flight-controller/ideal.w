@@ -58,10 +58,10 @@ resource FlightController {
   _scheduled_flights: cloud.Queue;
 
   init(on_runway_available: inflight (str): str, props: FlightControllerProps) {
-    let runway = new CountingSemaphore(CountingSemaphoreProps { available_resources: this.runway_limit });
+    let runway = new CountingSemaphore(available_resources: this.runway_limit);
     this.runway_limit = runway.limit;
     this._scheduled_flights = new cloud.Queue();
-    let availability_checker = new cloud.Schedule(cloud.ScheduleProps { rate: props.max_runway_occupation_per_flight });
+    let availability_checker = new cloud.Schedule(rate: props.max_runway_occupation_per_flight);
     let availability_signal = new cloud.Topic();
 
     let send_next_flight = inflight () => {
@@ -96,7 +96,7 @@ resource FlightController {
     // event-based, so that runway can be used immediately if there are more flights scheduled
     let send_next_flight_fn = availability_signal.on_message(inflight (message: str) => {
       send_next_flight();
-    }, cloud.TopicOnMessageProps { timeout: props.max_runway_occupation_per_flight }); // FIXME: TopicOnMessageProps should extends FunctionProps: https://github.com/winglang/wing/issues/2218
+    }, timeout: props.max_runway_occupation_per_flight);
 
     let saturate_runway = inflight () => {
       let var available_capacity = runway.get_available_capacity();
@@ -107,7 +107,7 @@ resource FlightController {
     };
 
     // time-based, so that new flights can use runway if previously scheduled flights are all done when signaling available
-    availability_checker.on_tick(saturate_runway, cloud.ScheduleOnTickProps { timeout: props.max_runway_occupation_per_flight });
+    availability_checker.on_tick(saturate_runway, timeout: props.max_runway_occupation_per_flight);
   }
 
   public inflight schedule_flight(message: str) {
@@ -120,24 +120,24 @@ struct MyFlightPlan {
 }
 
 let flight_controller = new FlightController(inflight (message: str): str => {
-  log("received: ${Json.stringify(message)}");
-  let plan = MyFlightPlan.from_json(Json.parse(message));
-  let var i = plan.start_id;
-  let step = 2500000;
-  let ratio = 10;
-  let target = i + ratio * step;
-  while i <= target {
-    if i == (i \ step * step) {
-        log("${i}/${target}");
+    log("received: ${Json.stringify(message)}");
+    let plan = MyFlightPlan.from_json(Json.parse(message));
+    let var i = plan.start_id;
+    let step = 2500000;
+    let ratio = 10;
+    let target = i + ratio * step;
+    while i <= target {
+      if i == (i \ step * step) {
+          log("${i}/${target}");
+      }
+      i = i + 1;
     }
-    i = i + 1;
-  }
-  let next_plan = MyFlightPlan { start_id: target + 1 };
-  return Json.stringify(next_plan);
-}, FlightControllerProps {
+    let next_plan = MyFlightPlan { start_id: target + 1 };
+    return Json.stringify(next_plan);
+  },
   runway_limit: 2,
   max_runway_occupation_per_flight: 5m,
-}) as "flight controller";
+) as "flight controller";
 
 new cloud.Function(inflight (s: str): str => {
     let var task_id = 0;
