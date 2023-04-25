@@ -1,12 +1,23 @@
+const fetchFunc = require("node-fetch");
+
 exports._fetch = async function (url, method, body) {
-  const resp = await fetch(url, {
+  console.info("Node Version:", process.version);
+  console.info("fetch", url, method, body);
+  const resp = await fetchFunc(url, {
     method: method,
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: body ? JSON.stringify(body) : undefined,
   });
-  const responseBody = await resp.text();
+  let responseBody = { message: "" };
+  try {
+    responseBody = await resp.json();
+  } catch (error) {
+    console.error("Error parsing JSON", error);
+    responseBody = { message: "" };
+  }
+
   console.log("responseBody", responseBody);
   return { body: responseBody, status: resp.status };
 };

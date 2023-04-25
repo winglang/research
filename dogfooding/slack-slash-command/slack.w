@@ -3,8 +3,19 @@ bring cloud;
   * Structs
   */
 struct FetchResponse {
-  body: str;
+  body: Json;
   status: num;
+}
+struct GithubCommitIntern {
+  message: str;
+}
+struct GithubCommit {
+  commit: GithubCommitIntern;
+  sha: str;
+}
+struct GithubCompare {
+  commits: Array<GithubCommit>;
+  base_commit : GithubCommit;
 }
 /**
   * RESOURCES
@@ -17,7 +28,8 @@ resource NodeHelpers {
   extern "./nodeHelpers.js" static inflight _sleep(ms:num);
   extern "./nodeHelpers.js" static inflight _jsonStringify(json:Json): str;
   extern "./nodeHelpers.js" static inflight _jsonParse(json:str): Json;
-  extern "./fetch.js" static inflight _fetch(url:str, method:str, body:Json): FetchResponse;
+  extern "./nodeHelpers.js" static inflight _castGithubCompare(json:Json): GithubCompare;
+  extern "./fetch.js" static inflight _fetch(url:str, method:str, body:Json?): FetchResponse;
 
   inflight getEnvOrThrow(env_var_name: str): str {
     return NodeHelpers._getEnvOrThrow(env_var_name);
@@ -27,7 +39,8 @@ resource NodeHelpers {
     return NodeHelpers._parse_querystring(body);
   }
 
-  inflight fetch(url:str, method:str, body:Json): FetchResponse {
+  inflight fetch(url:str, method:str, body:Json?): FetchResponse {
+    log("FETCHING");
     return NodeHelpers._fetch(url, method, body);
   }
 
@@ -41,6 +54,10 @@ resource NodeHelpers {
 
   inflight jsonParse(json:str): Json {
     return NodeHelpers._jsonParse(json);
+  }
+
+  inflight castToGithubCompare(json:Json): GithubCompare {
+    return NodeHelpers._castGithubCompare(json);
   }
 }
 resource Ngrok{
@@ -100,8 +117,8 @@ let bucket = new cloud.Bucket();
 // }) as "setupApi";
 
 
+let EMPTY_JSON = Json { empty: "https://github.com/winglang/wing/issues/1947" };
 api.post("/challenge", inflight (request: cloud.ApiRequest): cloud.ApiResponse => {
-  let EMPTY_JSON = Json { empty: "https://github.com/winglang/wing/issues/1947" };
   log("HANDLE CHALLENGE REQUEST");
   let body = request.body ?? EMPTY_JSON;
   let challenge = str.from_json( body.get("challenge"));
@@ -120,13 +137,26 @@ api.post("/challenge", inflight (request: cloud.ApiRequest): cloud.ApiResponse =
   return resp;
 });
 
+struct SlackPayload {
+  response_url: str;
+  user_id: str;
+}
 api.post("/command", inflight (request: cloud.ApiRequest): cloud.ApiResponse => {
   let EMPTY_JSON = Json { empty: "https://github.com/winglang/wing/issues/1947" };
   log("HANDLE COMMAND REQUEST");
   let body = request.body ?? EMPTY_JSON;
-  let response_url = str.from_json(body.get("response_url"));
-  log(response_url);
-  queue.push(str.from_json(body.get("response_url")));
+  let slack_payload : SlackPayload = SlackPayload {
+    response_url: str.from_json(body.get("response_url")),
+    user_id: str.from_json(body.get("user_id")),
+  };
+  
+  let response_url = node_helper.jsonStringify(slack_payload);
+  log("response_url: ${slack_payload.response_url}");
+  log("user_id: ${slack_payload.user_id}");
+  log("queue payload: ${response_url}");
+
+
+  queue.push(str.from_json(response_url));
   // bucket.put(str.from_json(body.get("trigger_id")),node_helper.jsonStringify(body));
 
   let resp = cloud.ApiResponse {
@@ -139,12 +169,30 @@ api.post("/command", inflight (request: cloud.ApiRequest): cloud.ApiResponse => 
   return resp;
 });
 
+
+
 queue.add_consumer( inflight (msg:str) => {
   log("HANDLE QUEUE ITEM");
-  log(msg);
-  node_helper.fetch(msg, "POST", Json {
-    text: "Hello World",
-  });
+  let slack_info = Json.try_parse(msg) ?? EMPTY_JSON;
+  log(str.from_json( slack_info.get("user_id")));
+
+  let base_version = "v0.13.21";
+  let releaseNote = node_helper.fetch("https://api.github.com/repos/winglang/wing/compare/${base_version}...main", "GET");
+  let callback_url = str.from_json(slack_info.get("response_url"));
+  let github_compare_response = node_helper.castToGithubCompare(releaseNote.body);
+  let var messages = "";
+  for commit in github_compare_response.commits {
+    log(commit.commit.message);
+    messages = "${messages} ${commit.commit.message}";
+  }
+
+  let foo = Json {
+    text: messages,
+  };
+
+
+  let resp = node_helper.fetch(callback_url, "POST", foo);
+  
   
 });
 

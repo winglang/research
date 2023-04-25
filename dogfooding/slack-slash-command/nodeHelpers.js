@@ -27,3 +27,7 @@ exports._jsonStringify = (obj) => {
 exports._jsonParse = (obj) => {
   return JSON.parse(obj);
 };
+
+exports._castGithubCompare = (obj) => {
+  return obj;
+};
