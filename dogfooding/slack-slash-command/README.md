@@ -22,7 +22,7 @@ This Slack bot is a slash command that will return a list of all the commits sin
 
 ## Demo Video
 
-[TBD](https://www.youtube.com)
+[Video in Slack]([https://www.youtube.com](https://winglang.slack.com/archives/C052FPLAP2A/p1682504224626169))
 
 ## Issues
 
