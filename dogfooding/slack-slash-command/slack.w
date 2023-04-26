@@ -7,18 +7,22 @@ struct FetchResponse {
   body: Json;
   status: num;
 }
+
 /* Github Api */
 struct GithubCommitIntern {
   message: str;
 }
+
 struct GithubCommit {
   commit: GithubCommitIntern;
   sha: str;
 }
+
 struct GithubCompare {
   commits: Array<GithubCommit>;
   base_commit : GithubCommit;
 }
+
 /* Slack */
 struct SlackPayload {
   response_url: str;
@@ -108,13 +112,11 @@ resource GithubApi {
     for commit in commits {
       log(commit.commit.message);
       let commit_message = this.node_helper.split_str( commit.commit.message, "\n").at(0);
-     // messages = "${messages}\n${commit.sha}\n${commit.commit.message}";
       messages = "${messages}\n${commit_message}";
     }
 
     return messages;
   }
-  
 }
 
 resource UserStateRepository {
@@ -191,12 +193,10 @@ resource CommandHandler {
       final_message = "No new commits since ${base_version}";
     }
     
-    this.slack_api.send_response(slack_payload.response_url, final_message);
-    
+    this.slack_api.send_response(slack_payload.response_url, final_message);    
   }
 
   inflight handle_rest_to_command(slack_payload: SlackPayload){
-   
     let commit_hash = this.node_helpers.split_str( slack_payload.text, " ").at(1);
   
     log("User '${slack_payload.user_id}' wants to reset to '${commit_hash}'");
@@ -211,16 +211,13 @@ resource CommandHandler {
     this.user_state_repository.set_user_state(slack_payload.user_id, commit_hash);
   
     let message = "Reset to commit '${commit_hash}'";    
-    this.slack_api.send_response(slack_payload.response_url, message);
-    
+    this.slack_api.send_response(slack_payload.response_url, message);  
   }
   
-  
-  inflight handle_commits_since_command(slack_payload: SlackPayload){
-   
+  inflight handle_commits_since_command(slack_payload: SlackPayload) {
     let commit_hash = this.node_helpers.split_str( slack_payload.text, " ").at(1);
-  
     log("User '${slack_payload.user_id}' wants to reset to '${commit_hash}'");
+
     try {
       let commits = this.github_api.get_commits_between(commit_hash, "main");
       let messages = this.github_api.extract_commit_messages(commits.commits);
@@ -230,7 +227,6 @@ resource CommandHandler {
       this.slack_api.send_response(slack_payload.response_url, "Failed to get commits between '${commit_hash}' and 'main'");
       return;
     }
-    
   }
 }
 
@@ -255,7 +251,6 @@ let command_handler = new CommandHandler(slack_api, user_state_repository, githu
   */
 
 let EMPTY_JSON = Json { empty: "https://github.com/winglang/wing/issues/1947" };
-
 
 api.post("/command", inflight (request: cloud.ApiRequest): cloud.ApiResponse => {
   let EMPTY_JSON = Json { empty: "https://github.com/winglang/wing/issues/1947" };
@@ -297,8 +292,7 @@ queue.add_consumer( inflight (msg:str) => {
     text: str.from_json(slack_info.get("text")),
     };
 
-  log("User ${slack_payload.user_id} requested ${slack_payload.command} with ${slack_payload.text}");
-  
+  log("User ${slack_payload.user_id} requested ${slack_payload.command} with ${slack_payload.text}");  
   
   if (slack_payload.text == ALLOWED_COMMANDS.get("RELEASES")) {
       command_handler.handle_releases_command(slack_payload);
@@ -333,59 +327,51 @@ resource TestApi {
     
   }
  
-    inflight call_with_encoded_body() :str {
-      // ARRANGE
-      let api_url = this.node_helper.getEnvOrThrow("API_URL");
-      let body = Json {
-        challenge: "fly",
-      };
-      // ACT
-      let response = TestApi.callWithUrlEncodedBody("${api_url}/challenge", body);
-      
-      // ASSERT
-      let expected = "{\"challenge\":\"fly\"}";
-      assert(response.body == expected);
-    }
+  inflight call_with_encoded_body() :str {
+    // ARRANGE
+    let api_url = this.node_helper.getEnvOrThrow("API_URL");
+    let body = Json {
+      challenge: "fly",
+    };
+    // ACT
+    let response = TestApi.callWithUrlEncodedBody("${api_url}/challenge", body);
     
-    inflight call_with_slack_body() :str {
-      // ARRANGE
-      let api_url = this.node_helper.getEnvOrThrow("API_URL");
-      let slack_body_object = Json {
-        api_app_id:"A123ABCDEF",
-        channel_id:"C052XXYZRL",
-        channel_name:"winglang",
-        command:"/wing",
-        is_enterprise_install:"false",
-        response_url:"https://jsonplaceholder.typicode.com/posts",
-        team_domain:"yada-dev",
-        team_id:"T01LWINGLANG",
-        text:"releases",
-        token:"sometoken",
-        trigger_id:"5101396650615.1702778361841.2c19a4f914940420391cc92cb60b747e",
-        user_id:"USER12345",
-        user_name:"raphael.manke",
-      };
-      // ACT
-      let response = TestApi.callWithUrlEncodedBody("${api_url}/command" ,slack_body_object );
-      // ASSERT
-      this.node_helper.sleep(1000);
-      assert(response.status == 200);
-      // need to wait until the queue has processed the message
-      this.node_helper.sleep(200);
-      let user_state = this.bucket.get_json("USER12345.json");
-      assert(user_state.get("last_commit") != "");
-    }
+    // ASSERT
+    let expected = "{\"challenge\":\"fly\"}";
+    assert(response.body == expected);
+  }
+    
+  inflight call_with_slack_body() :str {
+    // ARRANGE
+    let api_url = this.node_helper.getEnvOrThrow("API_URL");
+    let slack_body_object = Json {
+      api_app_id:"A123ABCDEF",
+      channel_id:"C052XXYZRL",
+      channel_name:"winglang",
+      command:"/wing",
+      is_enterprise_install:"false",
+      response_url:"https://jsonplaceholder.typicode.com/posts",
+      team_domain:"yada-dev",
+      team_id:"T01LWINGLANG",
+      text:"releases",
+      token:"sometoken",
+      trigger_id:"5101396650615.1702778361841.2c19a4f914940420391cc92cb60b747e",
+      user_id:"USER12345",
+      user_name:"raphael.manke",
+    };
+    // ACT
+    let response = TestApi.callWithUrlEncodedBody("${api_url}/command" ,slack_body_object );
+    // ASSERT
+    this.node_helper.sleep(1000);
+    assert(response.status == 200);
+    // need to wait until the queue has processed the message
+    this.node_helper.sleep(200);
+    let user_state = this.bucket.get_json("USER12345.json");
+    assert(user_state.get("last_commit") != "");
+  }
 }
 
 let testApi = new TestApi(node_helper, api, queue, bucket);
-
-// new cloud.Function(inflight () => {
-//   testApi.call_with_encoded_body();
-// }, cloud.FunctionProps {
-//   env: {
-//     "API_URL": api.url,
-//   }
-// }) as "test: handle urlencoded body";
 
 new cloud.Function(inflight () => {
   log(node_helper.getEnvOrThrow("API_URL"));
