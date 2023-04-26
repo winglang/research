@@ -20,26 +20,17 @@ let catalogs_dir = "${src_dir}/catalogs";
 let configs_dir = "${src_dir}/configs";
 let config = Json.parse(utils.read_file("${configs_dir}/configs.json"));
 
-// The ETL resource can probably be broken down
-resource ETL {
+resource Storage {
   inbox: cloud.Bucket;
   catalogs: cloud.Bucket;
   transformations: cloud.Bucket;
   publishers: cloud.Table;
   citations: cloud.Table;
-  initialized: cloud.Counter;
-  ingestion: cloud.Queue;
-  loader: cloud.Queue;
-  pubs: Array<Json>;
 
   init() {
-    this.pubs = utils.json_to_array(config.get("publishers"));
     this.inbox = new cloud.Bucket() as "inbox";
     this.transformations = new cloud.Bucket() as "transformations";
     this.catalogs = new cloud.Bucket() as "xslt catalog";
-    this.initialized = new cloud.Counter() as "initialized";
-    this.ingestion = new cloud.Queue() as "ingestion work queue";
-    this.loader = new cloud.Queue() as "loader work queue";
 
     this.publishers = new cloud.Table(cloud.TableProps{
       name: "publishers",
@@ -62,20 +53,44 @@ resource ETL {
         citations: cloud.ColumnType.STRING,
       }
     }) as "citations";
+  }
+}
+
+// The ETL resource can probably be broken down
+resource ETL {
+  storage: Storage;
+  initialized: cloud.Counter;
+  ingestion: cloud.Queue;
+  loader: cloud.Queue;
+  pubs: Array<Json>;
+
+  init(storage: Storage) {
+    this.pubs = utils.json_to_array(config.get("publishers"));
+    this.storage = storage;
+    this.initialized = new cloud.Counter() as "initialized";
+    this.ingestion = new cloud.Queue() as "ingestion work queue";
+    this.loader = new cloud.Queue() as "loader work queue";
+
     
     let ingest = this.ingestion;
     let self = this;
-    let inbox = this.inbox;
-    let catalogs = this.catalogs;
-    let publishers = this.publishers;
-    let citations = this.citations;
-    let transformations = this.transformations;
+    let inbox = this.storage.inbox;
+    let catalogs = this.storage.catalogs;
+    let publishers = this.storage.publishers;
+    let citations = this.storage.citations;
+    let transformations = this.storage.transformations;
     let loader = this.loader;
     
+    // Upload all the catalogs
+    for p in this.pubs {
+      let catalog_name = str.from_json(p.get("catalog"));
+      let catalog_content = utils.read_file("${catalogs_dir}/${catalog_name}");
+      catalogs.add_object("${catalog_name}", "${catalog_content}");
+    }
 
-    this.inbox.on_create(inflight(key: str) => {
-      log("inbox on create: ${key}");
-      self.post_init();
+    // Create the inbox trigger
+    inbox.on_create(inflight(key: str) => {
+      self.lazy_loader();
       let parts = utils.split_path(key);
       let pub_name = parts.at(0);
       let file_name = parts.at(1);
@@ -84,7 +99,6 @@ resource ETL {
         pub_name: "${pub_name}",
         file_name: "${file_name}"
       };
-      log("ingest job: ${ingest_job}");
       ingest.push(Json.stringify(ingest_job));
     });
 
@@ -113,19 +127,12 @@ resource ETL {
         publisher: "${publisher.get("name")}",
         date_ingested: "${utils.date()}",
         raw_transform: "${transformations.get(key)}",
-        citations: "{}"
+        citations: "TODO: parse xml to Json"
       });
-      log("citation inserted with file name: ${key}");
     });
-
-    // Upload all the catalogs
-    for p in this.pubs {
-      let catalog_name = str.from_json(p.get("catalog"));
-      let catalog_content = utils.read_file("${catalogs_dir}/${catalog_name}");
-      this.catalogs.add_object("${catalog_name}", "${catalog_content}");
-    }
   }
 
+  // Populate things after deploy
   inflight post_deploy_init() {
     // Create dynamodb entries 
     // TODO: replace with initial entries https://github.com/winglang/wing/issues/2274
@@ -135,7 +142,7 @@ resource ETL {
       let name = str.from_json(p.get("name"));
       
       // Do not call add_publisher (to limit latency and lambda invocation count)
-      this.publishers.insert(Json {
+      this.storage.publishers.insert(Json {
         name: "${name}",
         catalog: "${catalog_name}",
         inbox_prefix: "${inbox_prefix}",
@@ -143,46 +150,26 @@ resource ETL {
     }
   }
 
-  inflight post_init() {
+  inflight lazy_loader() {
     // Lazy post initializer TODO: need post deploy trigger
     if (this.initialized.peek() == 0) {
       this.post_deploy_init();
       this.initialized.inc();
     }
   }
-
-  inflight add_publisher(name: str, catalog: str, inbox_prefix: str) {
-    this.post_init();
-
-    this.publishers.insert(Json {
-      name: "${name}",
-      catalog: "${catalog}",
-      inbox_prefix: "${inbox_prefix}",
-    });
-  }
-
-  inflight get_publisher(name: str): Json {
-    this.post_init();
-
-    return this.publishers.get("${name}");
-  }
-
-  inflight upload(file_name: str, contents: str) {
-    this.post_init();
-    this.inbox.put("${file_name}", "${contents}");
-  }
 }
 
-let etl = new ETL();
+let storage = new Storage();
+let etl = new ETL(storage);
 
 // TESTS
 new cloud.Function(inflight () => {
   let xmls_dir = "${src_dir}/xmls";
   let xml = utils.read_file2("${xmls_dir}/example.xml");
   log("uploading xml for ingestion...");
-  etl.upload("wiley/example.xml", "xml");
+  storage.inbox.put("wiley/example.xml", xml);
   utils.sleep(1000);
-  let entry = Json etl.citations.get("wiley/example.xml");
+  let entry = Json storage.citations.get("wiley/example.xml");
   let publisher = str.from_json(entry.get("publisher"));
   assert(publisher == "\"Wiley\"");
 }) as "test: ingestion";

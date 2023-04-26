@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <title>Chemicals Involved in Decomposition</title>  
+  <body>
+    Some content about the chemicals involved in decomposition, including enzymes, bacteria, and gases produced during the process.
+    <topics>
+      <topic>
+        <name>Enzymes</name>
+        <description>Enzymes play a crucial role in the decomposition process by breaking down complex organic molecules into simpler compounds, such as proteins into amino acids, and fats into fatty acids and glycerol.</description>
+      </topic>
+      <topic>
+        <name>Bacteria</name>
+        <description>Bacteria are essential in decomposition, as they break down organic matter through fermentation and other metabolic processes, producing various byproducts such as carbon dioxide, ammonia, and other gases.</description>
+      </topic>
+      <topic>
+        <name>Gases</name>
+        <description>During decomposition, gases such as carbon dioxide, methane, hydrogen sulfide, and ammonia are produced as byproducts of the breakdown of organic compounds by bacteria and other microorganisms.</description>
+      </topic>
+    </topics>
+  </body>
+  <citations>    
+    <author>
+      <f>Rebecca</f>
+      <l>Murphy</l>
+      <group>         
+        <name>University of Edinburgh</name>
+      </group>
+    </author>
+    <author>
+      <f>Matthew</f>
+      <l>Baker</l>
+      <group>         
+        <name>Michigan State University</name>
+      </group>
+    </author>
+    <author>
+      <f>Stephanie</f>
+      <l>Chen</l>
+      <group>
+        <name>University of Toronto</name>
+      </group>
+    </author>
+    <author>
+      <f>Richard</f>
+      <l>Jones</l>
+      <group>
+        <name>Wageningen University & Research</name>
+      </group>
+    </author>
+  </citations>
+</document>

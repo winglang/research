@@ -6,5 +6,5 @@ This is a simple ETL system that will listen for XML documents to be uploaded to
 Cristian and Hasan
 
 ## Demo Video
-TODO
+https://www.loom.com/share/232c49f1c6ea49af832bef6c83d95f4f
 

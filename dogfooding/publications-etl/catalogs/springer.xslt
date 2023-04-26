@@ -9,15 +9,15 @@
     <xsl:for-each select="author">
       <name>
         <first>
-          <xsl:value-of select="normalize-space(fname)"/>
+          <xsl:value-of select="normalize-space(f)"/>
         </first>
         <last>
-          <xsl:value-of select="normalize-space(lname)"/>
+          <xsl:value-of select="normalize-space(l)"/>
         </last>
       </name>
       <affiliations>
         <ul>
-          <xsl:for-each select="aff">
+          <xsl:for-each select="group">
             <li>
               <xsl:value-of select="normalize-space(name)"/>
             </li>

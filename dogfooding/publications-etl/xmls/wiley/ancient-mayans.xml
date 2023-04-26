@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <title>Ancient Mayan Civilization</title>  
+  <body>
+    Some content about the ancient Mayan civilization, including their history, culture, and achievements.
+    <topics>
+      <topic>
+        <name>History</name>
+        <description>The Maya civilization was a Mesoamerican civilization developed by the Maya peoples, who were known for their hieroglyphic script, architecture, mathematics, and astronomy.</description>
+      </topic>
+      <topic>
+        <name>Culture</name>
+        <description>Mayan culture was rich in art, mythology, and unique traditions, with a strong focus on agriculture, spirituality, and social hierarchy.</description>
+      </topic>
+      <topic>
+        <name>Achievements</name>
+        <description>The Mayans were skilled in various fields, such as astronomy, mathematics, and agriculture. They developed the concept of zero and created an advanced calendar system.</description>
+      </topic>
+    </topics>
+  </body>
+  <citations>    
+    <author>
+      <fname>Emily</fname>
+      <lname>Adams</lname>
+      <aff>         
+        <name>Yale University</name>
+      </aff>
+    </author>
+    <author>
+      <fname>David</fname>
+      <lname>Thompson</lname>
+      <aff>         
+        <name>University of Pennsylvania</name>
+      </aff>
+    </author>
+    <author>
+      <fname>Maria</fname>
+      <lname>Garcia</lname>
+      <aff>
+        <name>University of California, Berkeley</name>
+      </aff>
+    </author>
+    <author>
+      <fname>James</fname>
+      <lname>Robinson</lname>
+      <aff>
+        <name>University of Texas at Austin</name>
+      </aff>
+    </author>
+  </citations>
+</document>
