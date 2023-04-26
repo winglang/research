@@ -26,4 +26,8 @@ This Slack bot is a slash command that will return a list of all the commits sin
 
 ## Issues
 
-- [#XXXX](https://github.com/winglang/wing/issues/XXXX) - TBD
+- [#2271](https://github.com/winglang/wing/issues/2271) - static api port
+- [#2272](https://github.com/winglang/wing/issues/2272) - wrong content-type
+- [#2078](https://github.com/winglang/wing/issues/2078) - support urlencoded body fixed by (#2079)
+- [#178](https://github.com/winglang/wing/issues/178) - lot of s3 buckets fixed by (#2111)
+- [#2048] (https://github.com/winglang/wing/issues/2084) - ngrok in extern
