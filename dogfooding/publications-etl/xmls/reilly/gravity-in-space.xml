@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <title>Effects of Gravity on Space</title>  
+  <body>
+    Some content about the effects of gravity on space, including gravitational waves, black holes, and the expansion of the universe.
+    <topics>
+      <topic>
+        <name>Gravitational Waves</name>
+        <description>Gravitational waves are ripples in the fabric of spacetime caused by the acceleration of massive objects. They were first detected in 2015 by the LIGO observatory.</description>
+      </topic>
+      <topic>
+        <name>Black Holes</name>
+        <description>Black holes are regions of spacetime with extremely strong gravitational effects, resulting from the collapse of massive stars. They trap everything, including light, within their event horizon.</description>
+      </topic>
+      <topic>
+        <name>Expansion of the Universe</name>
+        <description>The expansion of the universe is the increase in the distance between any two given gravitationally unbound parts of the observable universe over time. It is an intrinsic expansion whereby the scale of space itself changes.</description>
+      </topic>
+    </topics>
+  </body>
+  <citations>    
+    <author>
+      <first_name>Emma</first_name>
+      <last_name>Watson</last_name>
+      <affiliation>         
+        <name>California Institute of Technology</name>
+      </affiliation>
+    </author>
+    <author>
+      <first_name>Michael</first_name>
+      <last_name>Johnson</last_name>
+      <affiliation>         
+        <name>Princeton University</name>
+      </affiliation>
+    </author>
+    <author>
+      <first_name>Olivia</first_name>
+      <last_name>Brown</last_name>
+      <affiliation>
+        <name>University of Oxford</name>
+      </affiliation>
+    </author>
+    <author>
+      <first_name>Lucas</first_name>
+      <last_name>Williams</last_name>
+      <affiliation>
+        <name>Max Planck Institute for Gravitational Physics</name>
+      </affiliation>
+    </author>
+  </citations>
+</document>

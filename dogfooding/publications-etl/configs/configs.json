@@ -1,0 +1,19 @@
+{
+  "publishers": [
+    {
+      "name": "O'Reilly",
+      "catalog": "reilly.xslt",
+      "inbox_prefix": "reilly"
+    },
+    {
+      "name": "Wiley",
+      "catalog": "wiley.xslt",
+      "inbox_prefix": "wiley"
+    },
+    {
+      "name": "Springer Scientific",
+      "catalog": "springer.xslt",
+      "inbox_prefix": "springer"
+    }
+  ]
+}

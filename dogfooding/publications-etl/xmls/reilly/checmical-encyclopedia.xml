@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+  <title>Chemical Encyclopedia</title>  
+  <body>
+    Some content about various chemicals, their properties, and applications.
+    <chemicals>
+      <chemical>
+        <name>Water</name>
+        <formula>H2O</formula>
+        <properties>
+          <property>
+            <name>State</name>
+            <value>Liquid</value>
+          </property>
+          <property>
+            <name>Boiling Point</name>
+            <value>100°C</value>
+          </property>
+          <property>
+            <name>Freezing Point</name>
+            <value>0°C</value>
+          </property>
+        </properties>
+      </chemical>
+      <chemical>
+        <name>Sodium Chloride</name>
+        <formula>NaCl</formula>
+        <properties>
+          <property>
+            <name>State</name>
+            <value>Solid</value>
+          </property>
+          <property>
+            <name>Melting Point</name>
+            <value>801°C</value>
+          </property>
+        </properties>
+      </chemical>
+    </chemicals>
+  </body>
+  <citations>    
+    <author>
+      <first_name>Bob</first_name>
+      <last_name>Jones</last_name>
+      <affiliation>         
+        <name>Cambridge University</name>
+      </affiliation>
+      <affiliation>         
+        <name>Harvard</name>
+      </affiliation>
+    </author>
+    <author>
+      <first_name>Alice</first_name>
+      <last_name>Smith</last_name>
+      <affiliation>
+        <name>Stanford University</name>
+      </affiliation>
+    </author>
+    <author>
+      <first_name>John</first_name>
+      <last_name>Doe</last_name>
+      <affiliation>
+        <name>MIT</name>
+      </affiliation>
+    </author>
+  </citations>
+</document>

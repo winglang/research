@@ -1,0 +1,19 @@
+{
+  "name": "clockwing",
+  "scripts": {
+    "dev": "esbuild src/*.ts --bundle --format=cjs --platform=node --target=node18 --outdir=dist",
+    "compile": "TF_BACKEND_BUCKET=wingly-tf-state-bucket TF_BACKEND_BUCKET_REGION=us-east-1 STATE_FILE=etl.tfstate wing compile -t tf-aws app.w -p ./plugins/tf-s3-backend.js",
+    "deploy": "cd target/app.tfaws && terraform init && terraform apply -auto-approve",
+    "destroy": "cd target/app.tfaws && terraform destroy -auto-approve"
+  },
+  "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.315.0",
+    "nanoid": "^4.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.12",
+    "esbuild": "^0.17.17",
+    "xslt-processor": "0.11.7",
+    "xslt3": "2.5.0"
+  }
+}
