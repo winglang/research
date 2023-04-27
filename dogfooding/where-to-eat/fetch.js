@@ -50,8 +50,8 @@ function transformResultToRestaurant(
     distance: getDistanceFromLatLonInKm(
       user_location_lat,
       user_location_lng,
-      result.geometry.location.lat(),
-      result.geometry.location.lng()
+      result.geometry.location.lat,
+      result.geometry.location.lng
     ),
     name: result.name,
     rating: result.rating,
