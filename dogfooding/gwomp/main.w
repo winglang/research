@@ -17,7 +17,7 @@ struct HttpRequestOptions {
   body: str;
 }
 
-resource Util {
+class Util {
   init() {
     this.display.hidden = true;
   }
@@ -43,7 +43,7 @@ struct GitHubProps {
   token: cloud.Secret;
 }
 
-resource GitHub {
+class GitHub {
   token: cloud.Secret;
   util: Util;
 
@@ -89,7 +89,7 @@ struct PostMessageArgs {
   blocks: Array<Json>?;
 }
 
-resource Slack {
+class Slack {
   token: cloud.Secret;
   util: Util;
 
@@ -128,7 +128,7 @@ struct GwompProps {
   channel: str;
 }
 
-resource Gwomp {
+class Gwomp {
   gh: GitHub;
   slack: Slack;
   channel: str;
@@ -162,7 +162,7 @@ resource Gwomp {
       });
     }
 
-    this.slack.post_message(channel: this.channel, blocks: blocks);
+    this.slack.post_message(channel: this.channel, blocks: blocks.copy());
   }
 }
 
@@ -199,7 +199,7 @@ new cloud.Function(inflight () => {
 }) as "test:daily report";
 
 // doesn't work in simulator, so comment-out when running locally :-(
-let schedule = new cloud.Schedule(cron: "0 6 * * ?"); // 9am Israel Time
-schedule.on_tick(inflight () => {
-  gwomp.daily_report();
-});
+// let schedule = new cloud.Schedule(cron: "0 6 * * ?"); // 9am Israel Time
+// schedule.on_tick(inflight () => {
+//   gwomp.daily_report();
+// });
