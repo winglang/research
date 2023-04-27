@@ -36,8 +36,8 @@ resource WhereToEat {
         //init fetch:
         this.fetch_utils = new Fetch();
         // init secrets
-        this.secret_google_places_api_key = new cloud.Secret(name: "GOOGLE_PLACES_API_KEY") as "GOOGLE_PLACES_API_KEY";
-        this.secret_user_location = new cloud.Secret(name: "USER_LOCATION") as "USER_LOCATION";
+        this.secret_google_places_api_key = new cloud.Secret(name: "GOOGLE_PLACES_API_KEY_NEW_3") as "GOOGLE_PLACES_API_KEY_NEW_3";
+        this.secret_user_location = new cloud.Secret(name: "USER_LOCATION_NEW_3") as "USER_LOCATION_NEW_3";
     }
 
     inflight _add(id: str, j: Json): str {
@@ -99,8 +99,8 @@ resource WhereToEatApi {
     init(where_to_eat: WhereToEat) {
         this.where_to_eat = where_to_eat;
         this.api = new cloud.Api();        
-        this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/research/dogfooding/where-to-eat/website");
-        this.website.add_json("config.json", { apiUrl: this.api.url });
+        this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/research/dogfooding/where-to-eat/website_new");
+        this.website.add_json("config.json", { apiUrl: this.api.url, websiteUrl: this.website.url });
         this.api.options("/addRestaurant", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
             return cloud.ApiResponse {
                 headers: {
