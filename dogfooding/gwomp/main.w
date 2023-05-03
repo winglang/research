@@ -17,6 +17,10 @@ struct HttpRequestOptions {
   body: str;
 }
 
+struct Url {
+  pathname: str;
+}
+
 class Util {
   init() {
     this.display.hidden = true;
@@ -26,7 +30,10 @@ class Util {
     return this._fetch(url, options);
   }
 
-  extern "./util.js" inflight to_json_array(obj: Json): Array<Json>;
+  extern "./util.js" inflight json_to_array(obj: Json): Array<Json>;
+  extern "./util.js" inflight json_to_opt(obj: Json): Json?;
+  extern "./util.js" inflight json_has(obj: Json, key: str): bool;
+  extern "./util.js" inflight parse_url(url: str): Url;
   extern "./util.js" inflight _fetch(url: str, options: Json): Json;
 }
 
@@ -37,6 +44,7 @@ struct GitHubIssue {
   url: str;
   number: num;
   title: str;
+  repo: str;
 }
 
 struct GitHubProps {
@@ -52,24 +60,48 @@ class GitHub {
     this.util = new Util();
   }
 
-  inflight list_assigned_issues(): Array<GitHubIssue> {
-    let result = MutArray<GitHubIssue>[];
-
-    let issues = this.util.to_json_array(this._list_assigned(this.token.value()).get("data"));
-    let pulls = this.util.to_json_array(this._list_pulls(this.token.value()).get("data").get("items"));
-
-    for p in pulls.concat((issues)) {
-      let title = str.from_json(p.get("title"));
-      let url = str.from_json(p.get("html_url"));
-      let number = num.from_json(p.get("number"));
-      result.push(GitHubIssue {
-        number: number,
-        url: url,
-        title: title,
-      });
+  inflight parse_repo(p: Json): str {
+    if this.util.json_has(p, "repository") {
+      return str.from_json(p.get("repository").get("full_name"));
     }
 
-    return result.copy();
+    if this.util.json_has(p, "repository_url") {
+      let result = this.util.parse_url(str.from_json(p.get("repository_url")));
+      let parts = result.pathname.split("/");
+      return "${parts.at(2)}/${parts.at(3)}";
+    }
+
+    return "unknown";
+  }
+
+  inflight list_assigned_issues(): Map<Array<GitHubIssue>> {
+    let result = MutMap<MutArray<GitHubIssue>>{};
+
+    let issues = this.util.json_to_array(this._list_assigned(this.token.value()).get("data"));
+    let pulls = this.util.json_to_array(this._list_pulls(this.token.value()).get("data").get("items"));
+
+    for p in pulls.concat((issues)) {
+      let issue = GitHubIssue {
+        number: num.from_json(p.get("number")),
+        url: str.from_json(p.get("html_url")),
+        title: str.from_json(p.get("title")),
+        repo: this.parse_repo(p),
+      };
+
+      if !result.has(issue.repo) {
+        result.set(issue.repo, MutArray<GitHubIssue>[]);
+      }
+
+      result.get(issue.repo).push(issue);
+    }
+
+    // immutable copy
+    let r2 = MutMap<Array<GitHubIssue>>{};
+    for k in Json.keys(result) {
+      r2.set(k, result.get(k).copy());
+    }
+
+    return r2.copy();
   }
 
   extern "./github.js" inflight _list_assigned(auth: str): Json;
@@ -142,7 +174,10 @@ class Gwomp {
   inflight daily_report() {
     let result = this.gh.list_assigned_issues();
 
+    log(Json.stringify(result));
+
     let blocks = MutArray<Json>[];
+
     blocks.push(Json { 
       type: "header", 
       text: Json { 
@@ -151,16 +186,31 @@ class Gwomp {
       } 
     });
 
-    for item in result {
-      let text = " 👉 <${item.url}|${item.title}> (#${item.number})";
-      blocks.push(Json { 
-        type: "context", 
-        elements: [ { 
-          type: "mrkdwn", 
-          text: text 
-        } ] 
-      });
+    for repo in Json.keys(result) {
+
+    blocks.push(Json { 
+      type: "context", 
+      elements: [ { 
+        type: "mrkdwn", 
+        text: "*${repo}*"
+      } ] 
+    });
+
+    let items = result.get(repo);
+      for item in items {
+
+        let text = " - <${item.url}|${item.title}> (${item.repo}#${item.number})";
+        blocks.push(Json { 
+          type: "context", 
+          elements: [ { 
+            type: "mrkdwn", 
+            text: text 
+          } ] 
+        });
+      }
     }
+
+    log(Json.stringify(blocks));
 
     this.slack.post_message(channel: this.channel, blocks: blocks.copy());
   }
@@ -177,9 +227,7 @@ let slack = new Slack(token: slack_token);
 new cloud.Function(inflight () => {
   log("querying github...");
   let result = gh.list_assigned_issues();
-  for r in result {
-    log(Json.stringify(r));
-  }
+  log(Json.stringify(result));
 }) as "test:github";
 
 new cloud.Function(inflight () => {
