@@ -218,8 +218,8 @@ class Gwomp {
 
 // -------------------------------------------------------------------------------
 
-let gh_token = new cloud.Secret(name: "github-token-3") as "GitHub Token";
-let slack_token = new cloud.Secret(name: "slack-token-3") as "Slack Token";
+let gh_token = new cloud.Secret(name: "eladb-github-token") as "GitHub Token";
+let slack_token = new cloud.Secret(name: "eladb-slack-token") as "Slack Token";
 
 let gh = new GitHub(token: gh_token);
 let slack = new Slack(token: slack_token);
@@ -247,7 +247,7 @@ new cloud.Function(inflight () => {
 }) as "test:daily report";
 
 // doesn't work in simulator, so comment-out when running locally :-(
-// let schedule = new cloud.Schedule(cron: "0 6 * * ?"); // 9am Israel Time
-// schedule.on_tick(inflight () => {
-//   gwomp.daily_report();
-// });
+let schedule = new cloud.Schedule(cron: "0 6 * * ?"); // 9am Israel Time
+schedule.on_tick(inflight () => {
+  gwomp.daily_report();
+});
