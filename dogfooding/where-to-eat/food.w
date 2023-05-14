@@ -1,8 +1,8 @@
 bring cloud;
 bring redis;
 
-resource Fetch {
-  extern "./fetch.js" inflight list_restaurants(location: str, keyword: str, api_key: str): Array<Json>;
+class Fetch {
+  extern "./fetch.js" inflight listRestaurants(location: str, keyword: str, api_key: str): Array<Json>;
   init() { }
 }
 
@@ -17,27 +17,27 @@ struct Restaurant {
 }
 
 interface IWhereToEat {
-    inflight list_restaurants(criteria: Criteria): Array<Restaurant>;
-    inflight list_bookmark(): Array<Restaurant>;
-    inflight bookmark_restaurant(restaurant: Restaurant): str;
+    inflight listRestaurants(criteria: Criteria): Array<Restaurant>;
+    inflight listBookmark(): Array<Restaurant>;
+    inflight bookmarkRestaurant(restaurant: Restaurant): str;
 }
 
-resource WhereToEat {
+class WhereToEat {
 
     db: redis.Redis;
     counter: cloud.Counter;
-    secret_google_places_api_key: cloud.Secret;
-    secret_user_location: cloud.Secret;
-    fetch_utils: Fetch;
+    secretGooglePlacesApiKey: cloud.Secret;
+    secretUserLocation: cloud.Secret;
+    fetchUtils: Fetch;
 
     init() {
         this.db = new redis.Redis();
         this.counter = new cloud.Counter();
         //init fetch:
-        this.fetch_utils = new Fetch();
+        this.fetchUtils = new Fetch();
         // init secrets
-        this.secret_google_places_api_key = new cloud.Secret(name: "GOOGLE_PLACES_API_KEY_NEW_3") as "GOOGLE_PLACES_API_KEY_NEW_3";
-        this.secret_user_location = new cloud.Secret(name: "USER_LOCATION_NEW_3") as "USER_LOCATION_NEW_3";
+        this.secretGooglePlacesApiKey = new cloud.Secret(name: "GOOGLE_PLACES_API_KEY_NEW_3") as "GOOGLE_PLACES_API_KEY_NEW_3";
+        this.secretUserLocation = new cloud.Secret(name: "USER_LOCATION_NEW_3") as "USER_LOCATION_NEW_3";
     }
 
     inflight _add(id: str, j: Json): str {
@@ -46,61 +46,61 @@ resource WhereToEat {
         return id;
     }
 
-    inflight bookmark_restaurant(restaurant: Restaurant): str {
+    inflight bookmarkRestaurant(restaurant: Restaurant): str {
         let id = this.counter.inc();
-        let id_str = "${id}";
-        log("new restaurant id: ${id_str}");
+        let idStr = "${id}";
+        log("new restaurant id: ${idStr}");
         let j = Json { 
           name: restaurant.name, 
           type: restaurant.type,
           rating: restaurant.rating
         };
-        log("adding new restaurant ${id_str} with data: ${j}");
-        return this._add(id_str, j);
+        log("adding new restaurant ${idStr} with data: ${j}");
+        return this._add(idStr, j);
     }
 
-    inflight list_bookmarks(): Array<Restaurant> {
+    inflight listBookmarks(): Array<Restaurant> {
         log("list restaurants");
         let result = MutArray<Restaurant>[]; 
         let ids = this.db.smembers("restaurants");
         for id in ids {
             let j = Json.parse(this.db.get(id) ?? "");
             let r = Restaurant {
-                name: str.from_json(j.get("name")),
-                type: str.from_json(j.get("type")),
-                rating: num.from_json(j.get("rating"))
+                name: str.fromJson(j.get("name")),
+                type: str.fromJson(j.get("type")),
+                rating: num.fromJson(j.get("rating"))
             };
             result.push(r);
         }
         return result.copy();
     }
 
-    inflight list_restaurants(keyword: str): Array<Restaurant> {
-        let api_key = this.secret_google_places_api_key.value();
-        let user_location = this.secret_user_location.value();
-        let jsons = this.fetch_utils.list_restaurants(user_location, keyword, api_key);
+    inflight listRestaurants(keyword: str): Array<Restaurant> {
+        let apiKey = this.secretGooglePlacesApiKey.value();
+        let userLocation = this.secretUserLocation.value();
+        let jsons = this.fetchUtils.listRestaurants(userLocation, keyword, apiKey);
         let restaurants = MutArray<Restaurant>[];
         for j in jsons {
             restaurants.push(Restaurant {
-                name: str.from_json(j.get("name")),
-                type: str.from_json(j.get("search_keyword")),
-                rating: num.from_json(j.get("rating"))
+                name: str.fromJson(j.get("name")),
+                type: str.fromJson(j.get("search_keyword")),
+                rating: num.fromJson(j.get("rating"))
             });
         }
         return restaurants.copy();
     }
 }
 
-resource WhereToEatApi {
+class WhereToEatApi {
     website: cloud.Website;
     api: cloud.Api;
-    where_to_eat: WhereToEat;
+    whereToEat: WhereToEat;
 
-    init(where_to_eat: WhereToEat) {
-        this.where_to_eat = where_to_eat;
+    init(whereToEat: WhereToEat) {
+        this.whereToEat = whereToEat;
         this.api = new cloud.Api();        
         this.website = new cloud.Website(path: "/Users/ainvoner/Documents/GitHub/research/dogfooding/where-to-eat/website_new_5");
-        this.website.add_json("config.json", { apiUrl: this.api.url, websiteUrl: this.website.url });
+        this.website.addJson("config.json", { apiUrl: this.api.url, websiteUrl: this.website.url });
         this.api.options("/addRestaurant", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
             return cloud.ApiResponse {
                 headers: {
@@ -133,14 +133,13 @@ resource WhereToEatApi {
         });
         this.api.get("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
             return cloud.ApiResponse {
-                body: {bookmarks: where_to_eat.list_bookmarks()},
+                body: {bookmarks: whereToEat.listBookmarks()},
                 status: 200
               };
         });
         this.api.get("/listRestaurants/{keyword}", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
-            let vars = req.vars ?? Map<str>{};
-            let keyword = vars.get("keyword");
-            let restaurants = where_to_eat.list_restaurants(keyword);
+            let keyword = req.vars.get("keyword");
+            let restaurants = whereToEat.listRestaurants(keyword);
             return cloud.ApiResponse {
                 body: {restaurants: restaurants},
                 status: 200
@@ -155,11 +154,11 @@ resource WhereToEatApi {
                   };
             }
             let restaurant = Restaurant {
-                name: str.from_json(body.get("name")),
-                type: str.from_json(body.get("type")),
-                rating: num.from_json(body.get("rating"))
+                name: str.fromJson(body.get("name")),
+                type: str.fromJson(body.get("type")),
+                rating: num.fromJson(body.get("rating"))
             };
-            where_to_eat.bookmark_restaurant(restaurant);
+            whereToEat.bookmarkRestaurant(restaurant);
             return cloud.ApiResponse {
                 body: {restaurant: restaurant},
                 status: 200
@@ -171,4 +170,3 @@ resource WhereToEatApi {
 
 let app = new WhereToEat();
 let appApi = new WhereToEatApi(app);
-
