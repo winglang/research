@@ -68,7 +68,7 @@ class GitHub {
     let issues = Util.jsonToArray(this._listAssigned(this.token.value()).get("data"));
     let pulls = Util.jsonToArray(this._listPulls(this.token.value()).get("data").get("items"));
 
-    for p in pulls.concat((issues)) {
+    for p in pulls.concat(issues) {
       let issue = GitHubIssue {
         number: num.fromJson(p.get("number")),
         url: str.fromJson(p.get("html_url")),
