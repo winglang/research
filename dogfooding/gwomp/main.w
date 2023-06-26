@@ -7,6 +7,7 @@
 // author: eladb
 //
 bring cloud;
+bring http;
 
 // ------------------------------------------------------------------------------------------------
 // Util
@@ -22,19 +23,8 @@ struct Url {
 }
 
 class Util {
-  init() {
-    this.display.hidden = true;
-  }
-
-  inflight fetch(url: str, options: HttpRequestOptions?): Json {
-    return this._fetch(url, options);
-  }
-
-  extern "./util.js" inflight json_to_array(obj: Json): Array<Json>;
-  extern "./util.js" inflight json_to_opt(obj: Json): Json?;
-  extern "./util.js" inflight json_has(obj: Json, key: str): bool;
-  extern "./util.js" inflight parse_url(url: str): Url;
-  extern "./util.js" inflight _fetch(url: str, options: Json): Json;
+  extern "./util.js" static inflight jsonToArray(obj: Json): Array<Json>;
+  extern "./util.js" static inflight parseUrl(url: str): Url;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -53,39 +43,37 @@ struct GitHubProps {
 
 class GitHub {
   token: cloud.Secret;
-  util: Util;
 
   init(props: GitHubProps) {
     this.token = props.token;
-    this.util = new Util();
   }
 
-  inflight parse_repo(p: Json): str {
-    if this.util.json_has(p, "repository") {
-      return str.from_json(p.get("repository").get("full_name"));
-    }
-
-    if this.util.json_has(p, "repository_url") {
-      let result = this.util.parse_url(str.from_json(p.get("repository_url")));
-      let parts = result.pathname.split("/");
-      return "${parts.at(2)}/${parts.at(3)}";
-    }
-
-    return "unknown";
-  }
-
-  inflight list_assigned_issues(): Map<Array<GitHubIssue>> {
+  inflight listAssignedIssues(): Map<Array<GitHubIssue>> {
     let result = MutMap<MutArray<GitHubIssue>>{};
 
-    let issues = this.util.json_to_array(this._list_assigned(this.token.value()).get("data"));
-    let pulls = this.util.json_to_array(this._list_pulls(this.token.value()).get("data").get("items"));
+    let parseRepo = (p: Json): str => {
+      if Json.has(p, "repository") {
+        return str.fromJson(p.get("repository").get("full_name"));
+      }
+  
+      if Json.has(p, "repository_url") {
+        let result = Util.parseUrl(str.fromJson(p.get("repository_url")));
+        let parts = result.pathname.split("/");
+        return "${parts.at(2)}/${parts.at(3)}";
+      }
+  
+      return "unknown";
+    };
+
+    let issues = Util.jsonToArray(this._listAssigned(this.token.value()).get("data"));
+    let pulls = Util.jsonToArray(this._listPulls(this.token.value()).get("data").get("items"));
 
     for p in pulls.concat((issues)) {
       let issue = GitHubIssue {
-        number: num.from_json(p.get("number")),
-        url: str.from_json(p.get("html_url")),
-        title: str.from_json(p.get("title")),
-        repo: this.parse_repo(p),
+        number: num.fromJson(p.get("number")),
+        url: str.fromJson(p.get("html_url")),
+        title: str.fromJson(p.get("title")),
+        repo: parseRepo(p),
       };
 
       if !result.has(issue.repo) {
@@ -104,8 +92,8 @@ class GitHub {
     return r2.copy();
   }
 
-  extern "./github.js" inflight _list_assigned(auth: str): Json;
-  extern "./github.js" inflight _list_pulls(auth: str): Json;
+  extern "./github.js" inflight _listAssigned(auth: str): Json;
+  extern "./github.js" inflight _listPulls(auth: str): Json;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -123,19 +111,16 @@ struct PostMessageArgs {
 
 class Slack {
   token: cloud.Secret;
-  util: Util;
 
   init(props: SlackProps) {
     this.token = props.token;
-    this.util = new Util();
   }
 
-  inflight post_message(args: PostMessageArgs) {
+  inflight postMessage(args: PostMessageArgs) {
     let token = this.token.value();
 
-    let blocks: Json = args.blocks ?? Array<Json> [];
-    let res = this.util.fetch("https://slack.com/api/chat.postMessage", 
-      method: "POST",
+    let blocks = args.blocks ?? Array<Json> [];
+    let res = http.post("https://slack.com/api/chat.postMessage", 
       headers: {
         "Authorization": "Bearer ${token}",
         "Content-Type": "application/json"
@@ -171,8 +156,8 @@ class Gwomp {
     this.channel = props.channel;
   }
 
-  inflight daily_report() {
-    let result = this.gh.list_assigned_issues();
+  inflight dailyReport() {
+    let result = this.gh.listAssignedIssues();
 
     log(Json.stringify(result));
 
@@ -198,13 +183,11 @@ class Gwomp {
 
     let items = result.get(repo);
       for item in items {
-
-        let text = " - <${item.url}|${item.title}> (${item.repo}#${item.number})";
         blocks.push(Json { 
           type: "context", 
           elements: [ { 
             type: "mrkdwn", 
-            text: text 
+            text: " - <${item.url}|${item.title}> (${item.repo}#${item.number})" 
           } ] 
         });
       }
@@ -212,28 +195,28 @@ class Gwomp {
 
     log(Json.stringify(blocks));
 
-    this.slack.post_message(channel: this.channel, blocks: blocks.copy());
+    this.slack.postMessage(channel: this.channel, blocks: blocks.copy());
   }
 }
 
 // -------------------------------------------------------------------------------
 
-let gh_token = new cloud.Secret(name: "eladb-github-token") as "GitHub Token";
-let slack_token = new cloud.Secret(name: "eladb-slack-token") as "Slack Token";
+let githubToken = new cloud.Secret(name: "eladb-github-token") as "GitHub Token";
+let slackToken = new cloud.Secret(name: "eladb-slack-token") as "Slack Token";
 
-let gh = new GitHub(token: gh_token);
-let slack = new Slack(token: slack_token);
+let gh = new GitHub(token: githubToken);
+let slack = new Slack(token: slackToken);
 
-new cloud.Function(inflight () => {
+test "github" {
   log("querying github...");
-  let result = gh.list_assigned_issues();
+  let result = gh.listAssignedIssues();
   log(Json.stringify(result));
-}) as "test:github";
+}
 
-new cloud.Function(inflight () => {
+test "slack" {
   log("posting a slack message...");
-  slack.post_message(channel: "#eladb-test", text: "Hello");
-}) as "test:slack";
+  slack.postMessage(channel: "#eladb-test", text: "Hello");
+}
 
 let gwomp = new Gwomp(
   github: gh, 
@@ -241,13 +224,12 @@ let gwomp = new Gwomp(
   channel: "#eladb-test"
 );
 
-new cloud.Function(inflight () => {
+test "daily report" {
   log("producing daily report");
-  gwomp.daily_report();
-}) as "test:daily report";
+  gwomp.dailyReport();
+}
 
-// doesn't work in simulator, so comment-out when running locally :-(
 let schedule = new cloud.Schedule(cron: "0 6 * * ?"); // 9am Israel Time
-schedule.on_tick(inflight () => {
-  gwomp.daily_report();
+schedule.onTick(inflight () => { 
+  gwomp.dailyReport(); 
 });
