@@ -193,6 +193,11 @@ class RestaurantApi {
     this.api.get("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
       return cloud.ApiResponse {
         body: Json.stringify({bookmarks: restaurantArrayToJson(restaurantsStore.listBookmarks())}),
+        headers: {
+            "Access-Control-Allow-Headers" => "Content-Type",
+            "Access-Control-Allow-Origin" => "*",
+            "Access-Control-Allow-Methods" => "OPTIONS,POST,GET"
+        },
         status: 200
       };
     });
@@ -201,6 +206,11 @@ class RestaurantApi {
       let restaurants = restaurantsStore.listRestaurantsFromGoogle(Criteria {keyword: keyword});
       return cloud.ApiResponse {
         body: Json.stringify({restaurants: restaurantArrayToJson(restaurants)}),
+        headers: {
+            "Access-Control-Allow-Headers" => "Content-Type",
+            "Access-Control-Allow-Origin" => "*",
+            "Access-Control-Allow-Methods" => "OPTIONS,POST,GET"
+        },
         status: 200
       }; 
     });
@@ -214,6 +224,11 @@ class RestaurantApi {
         };
         restaurantsStore.bookmarkRestaurant(restaurant);
         return cloud.ApiResponse {
+          headers: {
+            "Access-Control-Allow-Headers" => "Content-Type",
+            "Access-Control-Allow-Origin" => "*",
+            "Access-Control-Allow-Methods" => "OPTIONS,POST,GET"
+          },
           body: Json.stringify({restaurant: restaurantToJson(restaurant)}),
           status: 200
         };
