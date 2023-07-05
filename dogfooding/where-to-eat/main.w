@@ -25,18 +25,18 @@ interface IRestaurantsStore extends std.IResource {
 }
 
 // Helper functions
-let deg2rad = inflight (deg: num): num => {
-  return deg * (math.PI / 180);
-};
 
+/*
+ * Calculate the distance between two points on the earth.
+ */
 let getDistanceFromLatLonInKm = inflight (lat1: num, lon1: num, lat2: num, lon2: num): num => {
   let R = 6371; // Radius of the earth in km
-  let dLat = deg2rad(lat2 - lat1); // deg2rad below
-  let dLon = deg2rad(lon2 - lon1);
+  let dLat = math.degreesToRadians(lat2 - lat1);
+  let dLon = math.degreesToRadians(lon2 - lon1);
   let a =
     math.sin(dLat / 2) * math.sin(dLat / 2) +
-    math.cos(deg2rad(lat1)) *
-    math.cos(deg2rad(lat2)) *
+    math.cos(math.degreesToRadians(lat1)) *
+    math.cos(math.degreesToRadians(lat2)) *
     math.sin(dLon / 2) *
     math.sin(dLon / 2);
     let c = 2 * math.atan(math.abs(a));
