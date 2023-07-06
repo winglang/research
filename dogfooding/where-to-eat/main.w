@@ -39,9 +39,7 @@ let getDistanceFromLatLonInKm = inflight (lat1: num, lon1: num, lat2: num, lon2:
     math.cos(math.degreesToRadians(lat2)) *
     math.sin(dLon / 2) *
     math.sin(dLon / 2);
-    let c = 2 * math.atan(math.abs(a));
-    //TODO: uncomment this line
-  //let c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  let c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   let d = R * c; // Distance in km
   return d * 1000; // Distance in m
 };
