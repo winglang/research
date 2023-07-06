@@ -237,7 +237,7 @@ class RestaurantApi {
 
 let store: IRestaurantsStore = new RestaurantsStore();
 let appApi = new RestaurantApi(store);
-let appWebsite = new cloud.Website(path: "./website_new_5");
+let appWebsite = new cloud.Website(path: "./website");
 // Add the API URL to the website config. It is being referenced in the static website code.
 appWebsite.addJson("config.json", { apiUrl: appApi.api.url });
 
