@@ -1,5 +1,5 @@
 bring cloud;
-bring redis;
+bring ex;
 bring http;
 bring math;
 
@@ -70,13 +70,13 @@ let restaurantArrayToJson = inflight (restaurants: Array<Restaurant>): Json => {
 };
 
 class RestaurantsStore impl IRestaurantsStore {
-  db: redis.Redis;
+  db: ex.Redis;
   counter: cloud.Counter;
   secretGooglePlacesApiKey: cloud.Secret;
   secretUserLocation: cloud.Secret;
   
   init() {
-    this.db = new redis.Redis();
+    this.db = new ex.Redis();
     this.counter = new cloud.Counter();
     this.secretGooglePlacesApiKey = new cloud.Secret(name: "GOOGLE_PLACES_API_KEY") as "GOOGLE_PLACES_API_KEY";
     this.secretUserLocation = new cloud.Secret(name: "USER_LOCATION") as "USER_LOCATION";
