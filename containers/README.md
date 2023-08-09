@@ -1,4 +1,4 @@
-# Container Support
+ Container Support
 
 This repository includes a prototype for the `Pod` and `Container` resources.
 
@@ -15,9 +15,13 @@ You can use the `pod.addContainer()` method to add containers to the pod, and sp
 
 This method returns a `Container` object which represents the container within the pod and has the following API:
 
+* (still not implemented) `bind(name, obj, ops)` - binds a preflight object `obj` to the container under the name `name` and allows it to perform the operations specified in `ops`.
 * `inflight url()` - returns the external URL of this container (this should likely be just `hostPort()` or something like that).
 
+
 ## Example
+
+![](https://github.com/winglang/research/assets/598796/e5baa05e-5000-46ab-8e0d-edef04aac613)
 
 ```js
 
@@ -59,6 +63,11 @@ test "hello k8s" {
 ```
 
 Under the hood, `Container` has a simulator implementation which will manage a local docker image with the desired settings.
+
+Here's the map with the internal implementation visible:
+
+![](https://github.com/winglang/research/assets/598796/2a47ca5e-f1f2-4138-91bf-ad9c4b78de4a)
+
 
 ## Roadmap
 
