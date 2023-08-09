@@ -15,7 +15,7 @@ You can use the `pod.addContainer()` method to add containers to the pod, and sp
 
 This method returns a `Container` object which represents the container within the pod and has the following API:
 
-* (still not implemented) `bind(name, obj, ops)` - binds a preflight object `obj` to the container under the name `name` and allows it to perform the operations specified in `ops`.
+* `bind(name, obj, ops)` (not implemented) - binds a preflight object `obj` to the container under the name `name` and allows it to perform the operations specified in `ops`.
 * `inflight url()` - returns the external URL of this container (this should likely be just `hostPort()` or something like that).
 
 
