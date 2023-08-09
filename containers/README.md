@@ -45,6 +45,8 @@ let myImage = pod.addContainer(
   port: 3000
 );
 
+myImage.bind(bucket, to: "MY_BUCKET");
+
 test "my image" {
   if let u2 = myImage.url() {
     let res = http.get(u2);
