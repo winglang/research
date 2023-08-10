@@ -1,5 +1,13 @@
 const child_process = require('child_process');
 
+exports.fff = function (obj, host, ops) {
+  // console.log(obj._toInflight().text);
+
+};
+
+exports.entrypointDir = function (root) {
+  return root.entrypointDir;
+};
 exports.shell = async function (command, args, cwd) {
   return new Promise((resolve, reject) => {
     console.log("execFile", command, args, { cwd });
@@ -13,3 +21,4 @@ exports.shell = async function (command, args, cwd) {
     });
   });
 };
+
