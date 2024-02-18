@@ -75,41 +75,40 @@ class RestaurantsStore impl IRestaurantsStore {
   secretGooglePlacesApiKey: cloud.Secret;
   secretUserLocation: cloud.Secret;
   
-  init() {
+  new() {
     this.db = new ex.Redis();
     this.counter = new cloud.Counter();
     this.secretGooglePlacesApiKey = new cloud.Secret(name: "GOOGLE_PLACES_API_KEY") as "GOOGLE_PLACES_API_KEY";
     this.secretUserLocation = new cloud.Secret(name: "USER_LOCATION") as "USER_LOCATION";
   }
 
-  inflight listRestaurantsFromGoogle(criteria: Criteria): Array<Restaurant> {
+  pub inflight listRestaurantsFromGoogle(criteria: Criteria): Array<Restaurant> {
     let location = this.secretUserLocation.value();
     let key = this.secretGooglePlacesApiKey.value();
     let user_location_lat = num.fromStr((location.split(",").at(0)));
     let user_location_lng = num.fromStr((location.split(",").at(1)));
     let restaurants = MutArray<Restaurant>[];
     let response = http.get(googlePlacesUrlPrefix + "&location=" + location + "&key=" + key + "&keyword=" + criteria.keyword, { headers: { "content-type": "application/json" }});
-    if let responseBody = response.body {
-      let body = Json.parse(responseBody);
-      let results = body.get("results");
-      for result in Json.values(results) {
-        // Filter out restaurants whose business_status is different from "OPERATIONAL"
-        if (str.fromJson(result.get("business_status")) == "OPERATIONAL") {
-          let name = str.fromJson(result.get("name"));
-          let rating = num.fromJson(result.tryGet("rating") ?? 0);
-          let user_ratings_total = num.fromJson(result.tryGet("user_ratings_total") ?? 0);
-          let price_level = num.fromJson(result.tryGet("price_level") ?? 0);
-          let open_now = bool.fromJson(result.tryGet("opening_hours")?.tryGet("open_now") ?? false);
-          let search_keyword = criteria.keyword;
-          let distance = getDistanceFromLatLonInKm(user_location_lat, user_location_lng, num.fromJson(result.get("geometry").get("location").get("lat")), num.fromJson(result.get("geometry").get("location").get("lng")));
-          log("name: ${name}, rating: ${rating}, user_ratings_total: ${user_ratings_total}, price_level: ${price_level}, open_now: ${open_now}, search_keyword: ${search_keyword}, distance: ${distance}");
-          let restaurant = Restaurant {
-              name: name,
-              rating: rating,
-              type: search_keyword
-          };
-          restaurants.push(restaurant);
-        }
+    let responseBody = response.body;
+    let body = Json.parse(responseBody);
+    let results = body.get("results");
+    for result in Json.values(results) {
+      // Filter out restaurants whose business_status is different from "OPERATIONAL"
+      if (str.fromJson(result.get("business_status")) == "OPERATIONAL") {
+        let name = str.fromJson(result.get("name"));
+        let rating = num.fromJson(result.tryGet("rating") ?? 0);
+        let user_ratings_total = num.fromJson(result.tryGet("user_ratings_total") ?? 0);
+        let price_level = num.fromJson(result.tryGet("price_level") ?? 0);
+        let open_now = bool.fromJson(result.tryGet("opening_hours")?.tryGet("open_now") ?? false);
+        let search_keyword = criteria.keyword;
+        let distance = getDistanceFromLatLonInKm(user_location_lat, user_location_lng, num.fromJson(result.get("geometry").get("location").get("lat")), num.fromJson(result.get("geometry").get("location").get("lng")));
+        log("name: ${name}, rating: ${rating}, user_ratings_total: ${user_ratings_total}, price_level: ${price_level}, open_now: ${open_now}, search_keyword: ${search_keyword}, distance: ${distance}");
+        let restaurant = Restaurant {
+            name: name,
+            rating: rating,
+            type: search_keyword
+        };
+        restaurants.push(restaurant);
       }
     }
     return restaurants.copy();
@@ -121,7 +120,7 @@ class RestaurantsStore impl IRestaurantsStore {
     return id;
   }
 
-  inflight bookmarkRestaurant(restaurant: Restaurant): str {
+  pub inflight bookmarkRestaurant(restaurant: Restaurant): str {
     let id = this.counter.inc();
     let idStr = "${id}";
     log("new restaurant id: ${idStr}");
@@ -134,7 +133,7 @@ class RestaurantsStore impl IRestaurantsStore {
     return this._add(idStr, j);
   }
 
-  inflight listBookmarks(): Array<Restaurant> {
+  pub inflight listBookmarks(): Array<Restaurant> {
     log("list restaurants");
     let result = MutArray<Restaurant>[]; 
     let ids = this.db.smembers("restaurants");
@@ -152,10 +151,10 @@ class RestaurantsStore impl IRestaurantsStore {
 }
 
 class RestaurantApi {
-  api: cloud.Api;
+  pub api: cloud.Api;
   restaurantsStore: IRestaurantsStore;
 
-  init(restaurantsStore: IRestaurantsStore) {
+  new(restaurantsStore: IRestaurantsStore) {
     this.restaurantsStore = restaurantsStore;
     this.api = new cloud.Api();
     this.api.options("/addRestaurant", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
@@ -178,7 +177,7 @@ class RestaurantApi {
         status: 204
       };
     });
-    this.api.options("/listRestaurants/{keyword}", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
+    this.api.options("/listRestaurants/:keyword", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
       return cloud.ApiResponse {
         headers: {
           "Access-Control-Allow-Headers" => "Content-Type",
@@ -199,7 +198,7 @@ class RestaurantApi {
         status: 200
       };
     });
-    this.api.get("/listRestaurants/{keyword}", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
+    this.api.get("/listRestaurants/:keyword", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
       let keyword = req.vars.get("keyword");
       let restaurants = restaurantsStore.listRestaurantsFromGoogle(Criteria {keyword: keyword});
       return cloud.ApiResponse {
