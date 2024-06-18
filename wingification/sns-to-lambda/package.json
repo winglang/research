@@ -1,0 +1,8 @@
+{
+  "name": "sns-to-lambda",
+  "version": "0.0.0",
+  "description": "Basic example of SNS to Lambda",
+  "author": "Your Name",
+  "license": "MIT",
+  "wing": true
+}
