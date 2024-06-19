@@ -1,0 +1,4 @@
+wingsdk
+Pillow
+boto3
+requests
